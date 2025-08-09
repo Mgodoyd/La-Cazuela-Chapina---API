@@ -8,7 +8,7 @@ namespace Api.Models
         public string Description { get; set; } = string.Empty;
         public decimal Price { get; set; }
         public bool Editable { get; set; } = false;
-        public ICollection<ProductoCombo> Products { get; set; } = new List<ProductoCombo>();
+        public virtual ICollection<ProductoCombo> Products { get; set; } = new List<ProductoCombo>();
     }
 
 }

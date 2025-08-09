@@ -6,10 +6,9 @@ namespace Api.Data
     public class ApplicationDbContext : DbContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
-
         // DbSets principales
         public DbSet<Tamal> Tamale { get; set; }
-        public DbSet<ProductoBase> ProductBase {get; set;}
+        public DbSet<ProductoBase> ProductBase { get; set; }
         public DbSet<Bebida> Beverage { get; set; }
         public DbSet<Combo> Combo { get; set; }
         public DbSet<ProductoCombo> ComboProduct { get; set; }
@@ -73,6 +72,16 @@ namespace Api.Data
             modelBuilder.Entity<DetallePedido>()
                 .Property(d => d.UnitPrice)
                 .HasPrecision(10, 2);
+
+            modelBuilder.Entity<Venta>()
+                .Property(v => v.Total)
+                .HasPrecision(10, 2);
+
+            modelBuilder.Entity<MovimientoInventario>()
+                .Property(m => m.Quantity)
+                .HasPrecision(10, 2);
         }
+
     }
 }
+

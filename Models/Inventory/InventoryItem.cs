@@ -5,7 +5,7 @@ namespace Api.Models
     {
         public int Id { get; set; }
         public int RawMaterialId { get; set; }
-        public MateriaPrima RawMaterial { get; set; } = null!;
+        public virtual MateriaPrima RawMaterial { get; set; } = null!;
         public decimal CurrentQuantity { get; set; }
     }
 
