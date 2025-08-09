@@ -3,7 +3,7 @@ namespace Api.Models
 {
     public class ComandoVoz
     {
-        public int Id { get; set; }
+        public Guid  Id { get; set; }
         public int UserId { get; set; }
         public virtual Usuario User { get; set; } = null!;
         public string TranscribedText { get; set; } = string.Empty;

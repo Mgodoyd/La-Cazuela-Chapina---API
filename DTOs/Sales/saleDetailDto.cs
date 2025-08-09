@@ -1,13 +1,12 @@
-namespace Api.Models
+namespace Api.DTOs
 
 {
-    public class DetallePedido
+     public class SaleDetailDto
     {
-        public Guid  Id { get; set; }
-        public Guid OrderId { get; set; }
+        // public Guid Id { get; set; }
+        public Guid SaleId { get; set; }
         public Guid ProductId { get; set; }
         public int Quantity { get; set; }
         public decimal UnitPrice { get; set; }
     }
-
-} 
+}

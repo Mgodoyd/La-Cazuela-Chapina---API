@@ -1,12 +1,12 @@
-namespace Api.Models
+namespace Api.DTOs
 
 {
-    public class ProductoCombo
+    public class ProductComboDto
     {
-        public Guid Id { get; set; }
+        // public Guid Id { get; set; }
         public Guid ComboId { get; set; }
         public Guid ProductId { get; set; }
         public int Quantity { get; set; }
     }
 
-} 
+}

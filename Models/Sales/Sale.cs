@@ -3,7 +3,7 @@ namespace Api.Models
 {
     public class Venta
     {
-        public int Id { get; set; }
+        public Guid  Id { get; set; }
         public DateTime Date { get; set; } = DateTime.UtcNow;
         public int UserId { get; set; }
         public virtual Usuario User { get; set; } = null!;

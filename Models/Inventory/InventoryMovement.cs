@@ -3,8 +3,8 @@ namespace Api.Models
 {
     public class MovimientoInventario
     {
-        public int Id { get; set; }
-        public int RawMaterialId { get; set; }
+        public Guid  Id { get; set; }
+        public Guid  RawMaterialId { get; set; }
         public virtual MateriaPrima RawMaterial { get; set; } = null!;
         public decimal Quantity { get; set; }
         public string MovementType { get; set; } = string.Empty; // In, Out, Waste
