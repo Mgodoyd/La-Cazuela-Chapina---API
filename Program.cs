@@ -17,5 +17,4 @@ app.UseRouting();
 app.UseAuthorization();
 
 app.MapGroup("/api/v1").MapControllers();
-
 app.Run();
