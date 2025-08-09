@@ -21,6 +21,7 @@ namespace Api.Data
         public DbSet<MateriaPrima> RawMaterial { get; set; }
         public DbSet<InventarioItem> Inventory { get; set; }
         public DbSet<MovimientoInventario> InventoryMovement { get; set; }
+        public DbSet<InventarioItem> InventoryItem { get; set; }
         public DbSet<ComandoVoz> VoiceCommand { get; set; }
         public DbSet<Proveedor> Supplier { get; set; }
 
