@@ -3,14 +3,4 @@ bin/
 obj/
 **/bin/
 **/obj/
-```
-
-Si `Back/Api/obj` ya fue versionado, quítalo del índice y vuelve a commitear:
-
-```
-git rm -r --cached Back/Api/obj
-git commit -m "Ignore obj folder"
-git push
-```bin/
-obj/
 
