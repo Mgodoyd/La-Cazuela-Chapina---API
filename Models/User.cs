@@ -12,10 +12,10 @@ namespace Api.Models
         public string Email { get; set; } = string.Empty;
 
         [MinLength(12)]
-        public byte[] PasswordHash { get; set; } = [];
+        public string PasswordHash { get; set; } = string.Empty;
 
         [MinLength(12)]
-        public byte[] PasswordSalt { get; set; } = [];
+        public string PasswordSalt { get; set; } = string.Empty;
         public string? RefreshToken { get; set; }
         public DateTime? RefreshTokenExpiryTime { get; set; }
         public string Role { get; set; } = "Customer"; // Admin, Seller, etc.
