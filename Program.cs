@@ -1,3 +1,4 @@
+using System.Text;
 using System.Threading.RateLimiting;
 using Api.Data;
 using Api.Interface;
@@ -5,6 +6,8 @@ using Api.Middleware;
 using Api.Repositories;
 using Api.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 DotNetEnv.Env.Load();
@@ -14,12 +17,13 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Cadena de conexión desde variables de entorno (o usa appsettings si prefieres)
+// Cadena de conexión desde variables de entorno
 var sqlHost = Environment.GetEnvironmentVariable("SQL_HOST");
 var sqlPort = Environment.GetEnvironmentVariable("SQL_PORT");
 var sqlDatabase = Environment.GetEnvironmentVariable("SQL_DATABASE");
 var sqlUser = Environment.GetEnvironmentVariable("SQL_USER");
 var sqlPassword = Environment.GetEnvironmentVariable("SQL_PASSWORD");
+
 var connectionString =
     $"Server={sqlHost},{sqlPort};Database={sqlDatabase};User Id={sqlUser};Password={sqlPassword};TrustServerCertificate=True;";
 
@@ -55,7 +59,28 @@ builder.Services.AddRateLimiter(options =>
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 });
 
-// DI (repos y servicios)
+// Autenticación y Autorización con JWT
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)
+            )
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+// 🔹 Inyección de dependencias
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>)); // genérico
 builder.Services.AddScoped<IInventoryRepository, InventoryRepository>();
 builder.Services.AddScoped<IComboRepository, ComboRepository>();
@@ -64,7 +89,7 @@ builder.Services.AddSingleton<JwtService>();
 
 var app = builder.Build();
 
-// Middlewares
+// Middlewares personalizados
 app.UseMiddleware<ErrorHandlingMiddleware>();
 app.UseMiddleware<RequestLoggingMiddleware>();
 
@@ -77,7 +102,11 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseRouting();
 app.UseCors("AllowAllOrigins");
+
+// Autenticación antes de Autorización
+app.UseAuthentication();
 app.UseAuthorization();
+
 app.UseRateLimiter();
 
 // Rutas

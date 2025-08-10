@@ -2,12 +2,14 @@ using Api.DTOs;
 using Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Authorization;
+
 
 namespace Api.Controllers
 {
     [ApiController]
     [Route("user")]
-    public class UserController : ControllerBase
+    public class UserController : BaseController
     {
         private readonly UserService _service;
 
@@ -16,31 +18,8 @@ namespace Api.Controllers
             _service = service;
         }
 
-        // Método base
-        private async Task<IActionResult> ExecuteAsync(Func<Task<IActionResult>> action)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            try
-            {
-                return await action();
-            }
-            catch (ValidationException vex)
-            {
-                return BadRequest(new { Error = vex.Message });
-            }
-            catch (KeyNotFoundException knf)
-            {
-                return NotFound(new { Error = knf.Message });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { Error = "Error inesperado." + ex });
-            }
-        }
-
         [HttpPost("register")]
+        [AllowAnonymous]
         public Task<IActionResult> Register([FromBody] UserDto dto) => ExecuteAsync(async () =>
         {
             if (dto.Password == null || dto.Password.Length < 12)
@@ -61,6 +40,7 @@ namespace Api.Controllers
         });
 
         [HttpPost("login")]
+        [AllowAnonymous]
         public Task<IActionResult> Login([FromBody] UserDto dto) => ExecuteAsync(async () =>
         {
             var (user, jwtToken, refreshToken) = await _service.LoginAsync(dto.Email, dto.Password);
@@ -83,6 +63,7 @@ namespace Api.Controllers
         });
 
         [HttpGet]
+        [Authorize]
         public Task<IActionResult> GetAll() => ExecuteAsync(async () =>
         {
             var users = await _service.GetAllAsync();
@@ -101,6 +82,7 @@ namespace Api.Controllers
         });
 
         [HttpGet("{id}")]
+        [Authorize]
         public Task<IActionResult> GetById(Guid id) => ExecuteAsync(async () =>
         {
             var user = await _service.GetByIdAsync(id);
@@ -122,14 +104,16 @@ namespace Api.Controllers
         });
 
         [HttpPut("{id}")]
+        [Authorize]
         public Task<IActionResult> Update(Guid id, [FromBody] UserDto dto) => ExecuteAsync(async () =>
         {
             await _service.UpdateAsync(id, dto);
-            var response = new { status = "ok" , data = "Actualizado correctamente"};
+            var response = new { status = "ok", data = "Actualizado correctamente" };
             return Ok(response);
         });
 
         [HttpPost("{id}/change-password")]
+        [Authorize]
         public Task<IActionResult> ChangePassword(Guid id, [FromBody] UserDto dto) => ExecuteAsync(async () =>
         {
             if (string.IsNullOrWhiteSpace(dto.CurrentPassword) || string.IsNullOrWhiteSpace(dto.NewPassword))
@@ -142,6 +126,7 @@ namespace Api.Controllers
         });
 
         [HttpDelete("{id}")]
+        [Authorize]
         public Task<IActionResult> Delete(Guid id) => ExecuteAsync(async () =>
         {
             await _service.DeleteAsync(id);
