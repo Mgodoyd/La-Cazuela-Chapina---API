@@ -9,7 +9,7 @@ namespace Api.Controllers
         [HttpGet]
         public IActionResult Get()
         {
-            return Ok(new { status = "OK", timestamp = System.DateTime.UtcNow });
+            return Ok(new { status = "OK", timestamp = DateTime.UtcNow });
         }
     }
 }
