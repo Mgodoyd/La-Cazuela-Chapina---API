@@ -10,6 +10,9 @@ namespace Api.DTOs
         public DateTime CreatedAt { get; set; }
 
         [Required]
+        public string? Status { get; set; } = "Solicitada";
+
+        [Required]
         public bool Confirmed { get; set; }
         public ICollection<OrderDetailDto> Items { get; set; } = new List<OrderDetailDto>();
     }

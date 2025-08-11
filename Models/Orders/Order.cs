@@ -6,6 +6,7 @@ namespace Api.Models
         public Guid Id { get; set; }
         public Guid UserId { get; set; }
         public virtual Usuario User { get; set; } = null!;
+        public string? Status { get; set; } = "Solicitada";
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public bool Confirmed { get; set; } = false;
         public virtual ICollection<DetallePedido> Items { get; set; } = new List<DetallePedido>();

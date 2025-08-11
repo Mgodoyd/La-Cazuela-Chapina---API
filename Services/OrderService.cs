@@ -38,6 +38,7 @@ namespace Api.Services
                 UserId = dto.UserId,
                 CreatedAt = dto.CreatedAt == default ? DateTime.UtcNow : dto.CreatedAt,
                 Confirmed = dto.Confirmed,
+                Status = dto.Status,
             };
 
             await _orderRepo.AddAsync(order);
@@ -56,6 +57,7 @@ namespace Api.Services
                     OrderId = order.Id,
                     ProductId = itemDto.ProductId,
                     Quantity = itemDto.Quantity,
+                    Status = order.Status,
                     UnitPrice = itemDto.UnitPrice > 0 ? itemDto.UnitPrice : product.Price
                 };
                 await _orderDetailRepo.AddAsync(detail);
@@ -121,6 +123,7 @@ namespace Api.Services
                         OrderId = order.Id,
                         ProductId = itemDto.ProductId,
                         Quantity = itemDto.Quantity,
+                        Status = order.Status,
                         UnitPrice = itemDto.UnitPrice
                     };
                     await _orderDetailRepo.AddAsync(nuevoDetalle);

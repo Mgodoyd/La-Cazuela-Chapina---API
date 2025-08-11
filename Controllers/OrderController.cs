@@ -24,7 +24,7 @@ namespace Api.Controllers
             return ExecuteAsync(async () =>
             {
                 var order = await _service.CreateAsync(dto);
-                return CreatedAtAction(nameof(GetById), new { id = order.Id }, new { status = "ok", data = order.UserId, order.Confirmed, order.CreatedAt, order.Items });
+                return CreatedAtAction(nameof(GetById), new { id = order.Id }, new { status = "ok", data = order });
             });
         }
 

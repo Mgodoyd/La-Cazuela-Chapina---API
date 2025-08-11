@@ -61,6 +61,7 @@ namespace Api.Controllers
                 status = "ok",
                 data = new
                 {
+                    user.Id,
                     user.Name,
                     user.Email,
                     user.Role,
