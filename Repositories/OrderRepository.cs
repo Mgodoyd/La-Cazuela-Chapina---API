@@ -6,10 +6,9 @@ using Api.Interface;
 namespace Api.Repositories
 
 {
-     public class OrderRepository : IOrderRepository
+    public class OrderRepository : EfRepository<Pedido>, IOrderRepository
     {
-        private readonly ApplicationDbContext _context;
-        public OrderRepository(ApplicationDbContext context) => _context = context;
+        public OrderRepository(ApplicationDbContext context) : base(context) { }
 
         public async Task<Pedido?> GetByIdWithItemsAsync(Guid id) =>
             await _context.Order.Include(o => o.Items)
@@ -30,10 +29,5 @@ namespace Api.Repositories
             }
         }
 
-        public async Task AddAsync(Pedido order)
-        {
-            _context.Order.Add(order);
-            await _context.SaveChangesAsync();
-        }
     }
 }

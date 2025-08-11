@@ -9,4 +9,4 @@ namespace Api.Models
         public string Size { get; set; } = "12oz"; // 12oz or 1L
     }
 
-} 
+}

@@ -24,6 +24,7 @@ namespace Api.Data
         public DbSet<InventarioItem> InventoryItem { get; set; }
         public DbSet<ComandoVoz> VoiceCommand { get; set; }
         public DbSet<Proveedor> Supplier { get; set; }
+        public DbSet<KnowledgeChunk> Knowledge { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -45,6 +46,11 @@ namespace Api.Data
                 .WithMany()
                 .HasForeignKey(p => p.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Pedido>()
+                .HasMany(p => p.Items)
+                .WithOne()
+                .HasForeignKey(d => d.OrderId);
 
             // Relación Usuario-Venta
             modelBuilder.Entity<Venta>()
@@ -70,6 +76,19 @@ namespace Api.Data
                 .Property(d => d.UnitPrice)
                 .HasPrecision(10, 2);
 
+            modelBuilder.Entity<DetalleVenta>()
+                .HasOne(d => d.Product)
+                .WithMany()
+                .HasForeignKey(d => d.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<DetalleVenta>()
+                .HasOne<Venta>()
+                .WithMany(v => v.Items)
+                .HasForeignKey(d => d.SaleId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+
             modelBuilder.Entity<DetallePedido>()
                 .Property(d => d.UnitPrice)
                 .HasPrecision(10, 2);
@@ -81,6 +100,10 @@ namespace Api.Data
             modelBuilder.Entity<MovimientoInventario>()
                 .Property(m => m.Quantity)
                 .HasPrecision(10, 2);
+
+            modelBuilder.Entity<KnowledgeChunk>()
+                .Property(k => k.Embedding)
+                .HasColumnType("NVARCHAR(MAX)");
         }
 
     }

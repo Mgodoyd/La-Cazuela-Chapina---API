@@ -129,7 +129,7 @@ namespace Api.Services
             _repository.Update(user);
             await _repository.SaveChangesAsync();
         }
-        
+
         public async Task DeleteAsync(Guid id)
         {
             var user = await _repository.GetByIdAsync(id) ?? throw new KeyNotFoundException("Usuario no encontrado.");

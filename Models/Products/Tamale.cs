@@ -9,4 +9,4 @@ namespace Api.Models
         public string SpiceLevel { get; set; } = string.Empty; // sin, suave, chapín
     }
 
-} 
+}

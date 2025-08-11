@@ -1,8 +1,11 @@
 using Api.DTOs;
 using Api.Services;
 using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
+using Api.Interface;
+using System.Text.Json;
 
 
 namespace Api.Controllers
@@ -12,10 +15,16 @@ namespace Api.Controllers
     public class UserController : BaseController
     {
         private readonly UserService _service;
+        private readonly JwtService _jwtService;
+        private readonly IUserRepository _userRepo;
+        private readonly RedisService _redisService;
 
-        public UserController(UserService service)
+        public UserController(UserService service, JwtService jwtService, IUserRepository userRepo, RedisService redisService)
         {
             _service = service;
+            _jwtService = jwtService;
+            _userRepo = userRepo;
+            _redisService = redisService;
         }
 
         [HttpPost("register")]
@@ -63,48 +72,66 @@ namespace Api.Controllers
         });
 
         [HttpGet]
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         public Task<IActionResult> GetAll() => ExecuteAsync(async () =>
         {
-            var users = await _service.GetAllAsync();
-            var response = new
+            string cacheKey = "users:all";
+
+            var cachedUsers = await _redisService.GetAsync(cacheKey);
+
+            if (!string.IsNullOrEmpty(cachedUsers))
             {
-                status = "ok",
-                data = users.Select(u => new
-                {
-                    u.Id,
-                    u.Name,
-                    u.Email,
-                    u.Role
-                })
-            };
-            return Ok(response);
+                var usersDto = JsonSerializer.Deserialize<IEnumerable<object>>(cachedUsers);
+                return Ok(new { status = "ok", data = usersDto });
+            }
+
+            var users = await _service.GetAllAsync();
+            var usersData = users.Select(u => new
+            {
+                u.Id,
+                u.Name,
+                u.Email,
+                u.Role
+            });
+
+            await _redisService.SetAsync(cacheKey, JsonSerializer.Serialize(usersData));
+
+            return Ok(new { status = "ok", data = usersData });
         });
 
         [HttpGet("{id}")]
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         public Task<IActionResult> GetById(Guid id) => ExecuteAsync(async () =>
         {
+            string cacheKey = $"user:{id}";
+
+            var cachedUser = await _redisService.GetAsync(cacheKey);
+
+            if (!string.IsNullOrEmpty(cachedUser))
+            {
+                var userDto = JsonSerializer.Deserialize<object>(cachedUser);
+                return Ok(new { status = "ok", data = userDto });
+            }
+
             var user = await _service.GetByIdAsync(id);
             if (user == null)
                 return NotFound(new { Error = "Usuario no encontrado." });
 
-            var response = new
+            var userData = new
             {
-                status = "ok",
-                data = new
-                {
-                    user.Id,
-                    user.Name,
-                    user.Email,
-                    user.Role
-                }
+                user.Id,
+                user.Name,
+                user.Email,
+                user.Role
             };
-            return Ok(response);
+
+            await _redisService.SetAsync(cacheKey, JsonSerializer.Serialize(userData));
+
+            return Ok(new { status = "ok", data = userData });
         });
 
         [HttpPut("{id}")]
-        [Authorize]
+        [Authorize(Roles = "Admin,Customer")]
         public Task<IActionResult> Update(Guid id, [FromBody] UserDto dto) => ExecuteAsync(async () =>
         {
             await _service.UpdateAsync(id, dto);
@@ -113,7 +140,7 @@ namespace Api.Controllers
         });
 
         [HttpPost("{id}/change-password")]
-        [Authorize]
+        [AllowAnonymous]
         public Task<IActionResult> ChangePassword(Guid id, [FromBody] UserDto dto) => ExecuteAsync(async () =>
         {
             if (string.IsNullOrWhiteSpace(dto.CurrentPassword) || string.IsNullOrWhiteSpace(dto.NewPassword))
@@ -126,12 +153,55 @@ namespace Api.Controllers
         });
 
         [HttpDelete("{id}")]
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         public Task<IActionResult> Delete(Guid id) => ExecuteAsync(async () =>
         {
             await _service.DeleteAsync(id);
             var response = new { status = "ok", data = "Eliminado correctamente" };
             return Ok(response);
         });
+
+        [HttpPost("refresh")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
+        {
+
+            ClaimsPrincipal principal;
+            principal = _jwtService.GetPrincipalFromExpiredToken(request.Token);
+
+
+            var email = principal.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Email)?.Value
+                        ?? principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+
+            if (email == null) return BadRequest("Token inválido.");
+
+            var user = await _userRepo.GetByEmailAsync(email);
+            if (user == null) return Unauthorized("Usuario no encontrado.");
+
+            if (user.RefreshToken != request.RefreshToken ||
+                user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+            {
+                return Unauthorized("Refresh token ya usado o expirado.");
+            }
+
+            var newJwtToken = _jwtService.GenerateJwtToken(user.Id, user.Email, user.Role);
+            var newRefreshToken = _jwtService.GenerateRefreshToken();
+
+            user.RefreshToken = newRefreshToken;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+
+            _userRepo.Update(user);
+            await _userRepo.SaveChangesAsync();
+
+            return Ok(new
+            {
+                status = "ok",
+                data = new
+                {
+                    token = newJwtToken,
+                    refreshToken = newRefreshToken
+                }
+            });
+        }
     }
 }

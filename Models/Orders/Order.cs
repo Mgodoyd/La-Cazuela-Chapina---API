@@ -11,4 +11,4 @@ namespace Api.Models
         public virtual ICollection<DetallePedido> Items { get; set; } = new List<DetallePedido>();
     }
 
-} 
+}

@@ -9,4 +9,4 @@ namespace Api.Models
         public string Phone { get; set; } = string.Empty;
     }
 
-} 
+}

@@ -6,10 +6,9 @@ using Microsoft.EntityFrameworkCore;
 namespace Api.Repositories
 
 {
-        public class ComboRepository : IComboRepository
+    public class ComboRepository : EfRepository<Combo>, IComboRepository
     {
-        private readonly ApplicationDbContext _context;
-        public ComboRepository(ApplicationDbContext context) => _context = context;
+        public ComboRepository(ApplicationDbContext context) : base(context) { }
 
         public async Task<Combo?> GetByIdWithProductsAsync(Guid id) =>
             await _context.Combo.Include(c => c.Products)
@@ -19,11 +18,5 @@ namespace Api.Repositories
             await _context.Combo.Where(c => c.Editable)
                                  .Include(c => c.Products)
                                  .ToListAsync();
-
-        public async Task AddAsync(Combo combo)
-        {
-            _context.Combo.Add(combo);
-            await _context.SaveChangesAsync();
-        }
     }
 }

@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 namespace Api.DTOs
 {
   public class UserDto
-{
+  {
     public string Name { get; set; } = string.Empty;
 
     [Required]
@@ -21,7 +21,7 @@ namespace Api.DTOs
 
     public string? RefreshToken { get; set; }
     public DateTime? RefreshTokenExpiryTime { get; set; }
-}
+  }
 
 
 }

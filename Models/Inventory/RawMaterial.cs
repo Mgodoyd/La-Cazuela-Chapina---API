@@ -9,4 +9,4 @@ namespace Api.Models
         public decimal MinStock { get; set; }
     }
 
-} 
+}

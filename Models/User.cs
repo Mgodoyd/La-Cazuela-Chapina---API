@@ -18,7 +18,7 @@ namespace Api.Models
         public string PasswordSalt { get; set; } = string.Empty;
         public string? RefreshToken { get; set; }
         public DateTime? RefreshTokenExpiryTime { get; set; }
-        public string Role { get; set; } = "Customer"; // Admin, Seller, etc.
+        public string Role { get; set; } = "Customer"; // Admin, etc.
     }
 
 }

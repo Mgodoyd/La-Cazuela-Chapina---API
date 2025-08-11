@@ -2,12 +2,14 @@ using Api.Models;
 using Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Api.Interface;
+
 namespace Api.Repositories
 
 {
-    public class SaleRepository(ApplicationDbContext context) : ISaleRepository
+    public class SaleRepository : EfRepository<Venta>, ISaleRepository
     {
-        private readonly ApplicationDbContext _context = context;
+
+        public SaleRepository(ApplicationDbContext context) : base(context) { }
 
         public async Task<Venta?> GetByIdWithItemsAsync(Guid id) =>
             await _context.Sales.Include(s => s.Items)
@@ -22,11 +24,5 @@ namespace Api.Repositories
             await _context.Sales.Where(s => s.Date >= start && s.Date <= end)
                                 .Include(s => s.Items)
                                 .ToListAsync();
-
-        public async Task AddAsync(Venta sale)
-        {
-            _context.Sales.Add(sale);
-            await _context.SaveChangesAsync();
-        }
     }
 }

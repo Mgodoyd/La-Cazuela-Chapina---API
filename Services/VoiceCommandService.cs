@@ -1,9 +1,6 @@
 using Api.DTOs;
 using Api.Models;
-using Api.Interface;  // Aquí está IRepository<T>
-using System;
-using System.Threading.Tasks;
-using System.Collections.Generic;
+using Api.Interface;
 
 public class VoiceCommandService
 {
@@ -26,7 +23,6 @@ public class VoiceCommandService
 
     public async Task AddAsync(VoiceCommandDto dto)
     {
-        // Validaciones manuales
         if (dto.UserId == Guid.Empty)
             throw new ArgumentException("UserId cannot be empty.");
 

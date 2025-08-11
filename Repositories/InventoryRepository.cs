@@ -3,13 +3,12 @@ using Api.Interface;
 using Api.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace Api.Repositories  
+namespace Api.Repositories
 
 {
-    public class InventoryRepository : IInventoryRepository
+    public class InventoryRepository : EfRepository<InventarioItem>, IInventoryRepository
     {
-        private readonly ApplicationDbContext _context;
-        public InventoryRepository(ApplicationDbContext context) => _context = context;
+        public InventoryRepository(ApplicationDbContext context) : base(context) { }
 
         public async Task<InventarioItem?> GetItemByRawMaterialAsync(Guid rawMaterialId) =>
             await _context.Inventory
@@ -42,8 +41,6 @@ namespace Api.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<IEnumerable<InventarioItem>> GetAllAsync() =>
-            await _context.Inventory.Include(i => i.RawMaterial).ToListAsync();
     }
 
 }

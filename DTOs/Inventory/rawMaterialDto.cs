@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 namespace Api.DTOs
 
 {
-     public class RawMaterialDto
+    public class RawMaterialDto
     {
         // public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
