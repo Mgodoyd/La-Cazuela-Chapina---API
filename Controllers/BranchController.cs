@@ -24,6 +24,8 @@ namespace Api.Controllers
         public Task<IActionResult> Register([FromBody] BranchDto dto) => ExecuteAsync(async () =>
         {
             var branch = await _service.RegisterAsync(dto);
+            await _redis.ClearCacheByPrefixAsync("branches_");
+            await _redis.ClearCacheByPrefixAsync("branch_");
             var response = new
             {
                 status = "ok",

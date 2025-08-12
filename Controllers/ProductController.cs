@@ -1,7 +1,6 @@
 using Api.DTOs;
 using Api.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
 using System.Text.Json;
 
 namespace Api.Controllers
@@ -39,6 +38,9 @@ namespace Api.Controllers
                 p.Name,
                 p.Description,
                 p.Price,
+                p.Stock,
+                p.Active,
+                p.CreatedAt
             });
 
             await _redis.SetAsync(cacheKey, JsonSerializer.Serialize(projectedProducts));
@@ -67,6 +69,9 @@ namespace Api.Controllers
                 product.Name,
                 product.Description,
                 product.Price,
+                product.Stock,
+                product.Active,
+                product.CreatedAt,
             };
 
             await _redis.SetAsync(cacheKey, JsonSerializer.Serialize(projectedProduct));
@@ -79,6 +84,8 @@ namespace Api.Controllers
         public Task<IActionResult> Create([FromBody] ProductBaseDto dto) => ExecuteAsync(async () =>
         {
             var product = await _service.CreateAsync(dto);
+            await _redis.ClearCacheByPrefixAsync("products_");
+            await _redis.ClearCacheByPrefixAsync("product_");
             return CreatedAtAction(nameof(GetById), new { id = product.Id }, new { status = "ok", data = product });
         });
 

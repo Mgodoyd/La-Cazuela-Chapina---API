@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Api.DTOs;
 using Api.Services;
+using Api.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -25,6 +26,8 @@ namespace Api.Controllers
             return ExecuteAsync(async () =>
             {
                 var rawMaterial = await _service.CreateRawMaterialAsync(dto);
+                await _redis.ClearCacheByPrefixAsync("inventory_");
+                await _redis.ClearCacheByPrefixAsync("inventory_item_");
                 return CreatedAtAction(nameof(GetInventoryItem), new { rawMaterialId = rawMaterial.Id }, new { status = "ok", data = rawMaterial });
             });
         }
@@ -36,7 +39,7 @@ namespace Api.Controllers
             var cachedInventory = await _redis.GetAsync(cacheKey);
             if (!string.IsNullOrEmpty(cachedInventory))
             {
-                var inventoryFromCache = JsonSerializer.Deserialize<IEnumerable<RawMaterialDto>>(cachedInventory);
+                var inventoryFromCache = JsonSerializer.Deserialize<IEnumerable<InventarioItem>>(cachedInventory);
                 return Ok(new { status = "ok", data = inventoryFromCache });
             }
 
@@ -53,7 +56,7 @@ namespace Api.Controllers
             var cachedItem = await _redis.GetAsync(cacheKey);
             if (!string.IsNullOrEmpty(cachedItem))
             {
-                var itemFromCache = JsonSerializer.Deserialize<RawMaterialDto>(cachedItem);
+                var itemFromCache = JsonSerializer.Deserialize<InventarioItem>(cachedItem);
                 return Ok(new { status = "ok", data = itemFromCache });
             }
 
@@ -72,6 +75,8 @@ namespace Api.Controllers
             return ExecuteAsync(async () =>
             {
                 var movement = await _service.RegisterMovementAsync(rawMaterialId, dto);
+                await _redis.ClearCacheByPrefixAsync("inventory_");
+                await _redis.ClearCacheByPrefixAsync("inventory_item_");
                 return Ok(new { status = "ok", data = movement });
             });
         }
