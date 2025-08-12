@@ -26,6 +26,8 @@ namespace Api.Controllers
             return ExecuteAsync(async () =>
             {
                 var combo = await _service.CreateAsync(dto);
+                await _redis.ClearCacheByPrefixAsync("combos_");
+                await _redis.ClearCacheByPrefixAsync("combo_");
                 return CreatedAtAction(nameof(GetById), new { id = combo.Id }, new { status = "ok", data = combo });
             });
         }

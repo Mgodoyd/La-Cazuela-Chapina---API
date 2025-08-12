@@ -12,7 +12,6 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using StackExchange.Redis;
 
-
 var builder = WebApplication.CreateBuilder(args);
 DotNetEnv.Env.Load();
 
@@ -34,6 +33,7 @@ var connectionString =
 var redisHost = Environment.GetEnvironmentVariable("REDIS_HOST");
 var redisPort = Environment.GetEnvironmentVariable("REDIS_PORT");
 
+// Conexión a Redis
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
     var config = new ConfigurationOptions
@@ -53,11 +53,20 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 });
 
 // CORS
+var allowedOrigins = new[] { "http://localhost:5173", "http://Albmdwapi-1889324219.us-east-1.elb.amazonaws.com" };
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAllOrigins", policy =>
-        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+    options.AddPolicy("AllowSpecificOrigins", builder =>
+    {
+        builder
+            .WithOrigins(allowedOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
 });
+
 
 // Rate Limiter
 builder.Services.AddRateLimiter(options =>
@@ -101,6 +110,7 @@ builder.Services
     });
 
 builder.Services.AddAuthorization();
+builder.Services.AddSignalR();
 
 // Inyección de dependencias
 // Repositorio genérico
@@ -125,6 +135,23 @@ builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<VoiceCommandService>();
 builder.Services.AddScoped<EmbeddingService>();
 builder.Services.AddScoped<RedisService>();
+// Servicios de voz con HttpClient configurado
+builder.Services.AddScoped<SpeechToTextService>(provider =>
+{
+    var httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
+    var httpClient = httpClientFactory.CreateClient("openai");
+    var configuration = provider.GetRequiredService<IConfiguration>();
+    return new SpeechToTextService(httpClient, configuration);
+});
+
+builder.Services.AddScoped<TextToSpeechService>(provider =>
+{
+    var httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
+    var httpClient = httpClientFactory.CreateClient("openai");
+    var configuration = provider.GetRequiredService<IConfiguration>();
+    return new TextToSpeechService(httpClient, configuration);
+});
+
 
 builder.Services.AddScoped<BusinessContextProvider>();
 
@@ -148,9 +175,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+
+app.UseWebSockets();
 app.UseHttpsRedirection();
 app.UseRouting();
-app.UseCors("AllowAllOrigins");
+app.UseCors("AllowSpecificOrigins");
 
 // Autenticación antes de Autorización
 app.UseAuthentication();

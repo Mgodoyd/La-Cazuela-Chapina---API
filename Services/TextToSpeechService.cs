@@ -1,49 +1,46 @@
+
+using System.Text.Json;
 using System.Net.Http.Headers;
-using System.Text;
 
-public class TextToSpeechService
+namespace Api.Services 
 {
-  private readonly HttpClient _httpClient;
-  private readonly string _azureSubscriptionKey;
-  private readonly string _region;
+    public class TextToSpeechService
+    {
+        private readonly HttpClient _httpClient;
+        private readonly string _openAiApiKey;
 
-  public TextToSpeechService(HttpClient httpClient, string azureSubscriptionKey, string region)
-  {
-    _httpClient = httpClient;
-    _azureSubscriptionKey = azureSubscriptionKey;
-    _region = region;
-  }
+        public TextToSpeechService(HttpClient httpClient, IConfiguration configuration)
+        {
+            _httpClient = httpClient;
+            _openAiApiKey = Environment.GetEnvironmentVariable("API_KEY_OPENAI") 
+                ?? configuration["OpenAI:ApiKey"] 
+                ?? throw new InvalidOperationException("API_KEY_OPENAI no está configurada");
+        }
 
-  public async Task<byte[]> SynthesizeAsync(string text)
-  {
-    var uri = $"https://{_region}.tts.speech.microsoft.com/cognitiveservices/v1";
+        public async Task<byte[]> SynthesizeAsync(string text)
+        {
+            var requestBody = new
+            {
+                model = "tts-1", // Modelo correcto para TTS
+                voice = "alloy", // Voces disponibles: alloy, echo, fable, onyx, nova, shimmer
+                input = text,
+                response_format = "mp3"
+            };
 
-    var ssml = $@"
-                  <speak version='1.0' xml:lang='en-US'>
-                    <voice xml:lang='en-US' xml:gender='Female' name='en-US-JessaNeural'>
-                      {System.Security.SecurityElement.Escape(text)}
-                    </voice>
-                  </speak>";
+            var jsonContent = JsonSerializer.Serialize(requestBody);
+            var content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
 
-    using var request = new HttpRequestMessage(HttpMethod.Post, uri);
-    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await FetchTokenAsync());
-    request.Headers.Add("User-Agent", "YourAppName");
-    request.Headers.Add("X-Microsoft-OutputFormat", "audio-16khz-32kbitrate-mono-mp3");
-    request.Content = new StringContent(ssml, Encoding.UTF8, "application/ssml+xml");
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/audio/speech")
+            {
+                Content = content
+            };
 
-    var response = await _httpClient.SendAsync(request);
-    response.EnsureSuccessStatusCode();
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _openAiApiKey);
 
-    return await response.Content.ReadAsByteArrayAsync();
-  }
+            var response = await _httpClient.SendAsync(request);
+            response.EnsureSuccessStatusCode();
 
-  private async Task<string> FetchTokenAsync()
-  {
-    var tokenUri = $"https://{_region}.api.cognitive.microsoft.com/sts/v1.0/issueToken";
-    using var request = new HttpRequestMessage(HttpMethod.Post, tokenUri);
-    request.Headers.Add("Ocp-Apim-Subscription-Key", _azureSubscriptionKey);
-    var response = await _httpClient.SendAsync(request);
-    response.EnsureSuccessStatusCode();
-    return await response.Content.ReadAsStringAsync();
-  }
+            return await response.Content.ReadAsByteArrayAsync();
+        }
+    }
 }

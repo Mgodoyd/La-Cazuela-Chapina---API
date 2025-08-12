@@ -1,19 +1,16 @@
 
-using System.Net.WebSockets;
 using Api.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-namespace Api.Controllers
 
+namespace Api.Controllers
 {
-    [Route("voice")]
-    [Authorize]
+    [Route("voicechat")]
     public class VoiceChatController : BaseController
     {
         private readonly OpenAIChatService _chat;
         private readonly BusinessContextProvider _contextProvider;
-        private readonly SpeechToTextService _speechToText; // Servicio que hace STT 
-        private readonly TextToSpeechService _textToSpeech; // Servicio TTS
+        private readonly SpeechToTextService _speechToText;
+        private readonly TextToSpeechService _textToSpeech;
 
         public VoiceChatController(OpenAIChatService chat, BusinessContextProvider contextProvider, SpeechToTextService speechToText, TextToSpeechService textToSpeech)
         {
@@ -23,61 +20,59 @@ namespace Api.Controllers
             _textToSpeech = textToSpeech;
         }
 
-        [HttpGet("/ws/voicechat")]
-        public async Task VoiceChat()
+        [HttpPost]
+        public async Task<IActionResult> ProcessVoiceMessage(IFormFile audio)
         {
-            if (!HttpContext.WebSockets.IsWebSocketRequest)
+            try
             {
-                HttpContext.Response.StatusCode = 400;
-                return;
-            }
-
-            var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-
-            var buffer = new byte[8192];
-            var conversationHistory = new List<string>();
-
-            while (webSocket.State == WebSocketState.Open)
-            {
-                var ms = new MemoryStream();
-                WebSocketReceiveResult result;
-                do
+                if (audio == null || audio.Length == 0)
                 {
-                    result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-                    if (result.MessageType == WebSocketMessageType.Close)
-                        break;
+                    return BadRequest(new { status = "error", message = "No se recibió archivo de audio" });
+                }
 
-                    ms.Write(buffer, 0, result.Count);
-                } while (!result.EndOfMessage);
+                // Leer el archivo de audio
+                using var memoryStream = new MemoryStream();
+                await audio.CopyToAsync(memoryStream);
+                var audioBytes = memoryStream.ToArray();
 
-                if (result.MessageType == WebSocketMessageType.Close)
-                    break;
-
-                var audioBytes = ms.ToArray();
-
-                // Transcribe audio a texto
+                // Transcribir audio a texto
                 var spokenText = await _speechToText.TranscribeAsync(audioBytes);
+                
+                if (string.IsNullOrEmpty(spokenText))
+                {
+                    return BadRequest(new { status = "error", message = "No se pudo transcribir el audio" });
+                }
 
-                conversationHistory.Add($"Usuario: {spokenText}");
-
+                // Obtener contexto relevante
                 var contextText = await _contextProvider.RetrieveContextAsync(spokenText, CancellationToken.None);
 
-                var prompt = string.Join("\n", conversationHistory);
-                if (!string.IsNullOrEmpty(contextText))
-                    prompt += "\nContexto relevante:\n" + contextText;
-
+                // Generar respuesta del AI
                 var aiResponse = await _chat.CreateChatAsync(spokenText, null, new[] { contextText }, strict: true, CancellationToken.None);
 
-                conversationHistory.Add($"IA: {aiResponse}");
+                if (string.IsNullOrEmpty(aiResponse))
+                {
+                    return BadRequest(new { status = "error", message = "No se pudo generar respuesta del AI" });
+                }
 
+                // Convertir respuesta del texto a audio
                 var audioResponse = await _textToSpeech.SynthesizeAsync(aiResponse);
 
-                await webSocket.SendAsync(audioResponse, WebSocketMessageType.Binary, true, CancellationToken.None);
+                if (audioResponse == null || audioResponse.Length == 0)
+                {
+                    return BadRequest(new { status = "error", message = "No se pudo generar audio de respuesta" });
+                }
+
+                // Devolver el audio de respuesta
+                return File(audioResponse, "audio/wav", "response.wav");
             }
-
-            await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Cerrando conexión", CancellationToken.None);
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { 
+                    status = "error", 
+                    message = "Error interno del servidor",
+                    details = ex.Message 
+                });
+            }
         }
-
     }
-
 }

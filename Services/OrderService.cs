@@ -38,6 +38,7 @@ namespace Api.Services
                 UserId = dto.UserId,
                 CreatedAt = dto.CreatedAt == default ? DateTime.UtcNow : dto.CreatedAt,
                 Confirmed = dto.Confirmed,
+                Stock = dto.Stock,
                 Status = dto.Status,
             };
 

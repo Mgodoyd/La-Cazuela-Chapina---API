@@ -1,16 +1,20 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 
-public class SpeechToTextService
+namespace Api.Services
 {
-    private readonly HttpClient _httpClient;
-    private readonly string _openAiApiKey;
-
-    public SpeechToTextService(HttpClient httpClient, string openAiApiKey)
+    public class SpeechToTextService
     {
-        _httpClient = httpClient;
-        _openAiApiKey = openAiApiKey;
-    }
+        private readonly HttpClient _httpClient;
+        private readonly string _openAiApiKey;
+
+        public SpeechToTextService(HttpClient httpClient, IConfiguration configuration)
+        {
+            _httpClient = httpClient;
+            _openAiApiKey = Environment.GetEnvironmentVariable("API_KEY_OPENAI") 
+                ?? configuration["OpenAI:ApiKey"] 
+                ?? throw new InvalidOperationException("API_KEY_OPENAI no está configurada");
+        }
 
     public async Task<string> TranscribeAsync(byte[] audioBytes, string filename = "audio.wav")
     {
@@ -36,6 +40,7 @@ public class SpeechToTextService
             return text.GetString() ?? "";
 
         return "";
+    }
     }
 }
 

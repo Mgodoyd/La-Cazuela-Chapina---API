@@ -24,6 +24,8 @@ namespace Api.Controllers
         public Task<IActionResult> Register([FromBody] SupplierDto dto) => ExecuteAsync(async () =>
         {
             var supplier = await _service.RegisterAsync(dto);
+            await _redis.ClearCacheByPrefixAsync("suppliers_");
+            await _redis.ClearCacheByPrefixAsync("supplier_");
             var response = new
             {
                 status = "ok",

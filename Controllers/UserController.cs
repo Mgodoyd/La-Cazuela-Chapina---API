@@ -45,6 +45,8 @@ namespace Api.Controllers
                     user.Role
                 }
             };
+            await _redisService.ClearCacheByPrefixAsync("users:");
+            await _redisService.ClearCacheByPrefixAsync("user:");
             return CreatedAtAction(nameof(GetById), new { id = user.Id }, response);
         });
 
@@ -150,6 +152,8 @@ namespace Api.Controllers
             await _service.ChangePasswordAsync(id, dto.CurrentPassword, dto.NewPassword);
 
             var response = new { status = "ok", data = "Actualizada correctamente" };
+            await _redisService.ClearCacheByPrefixAsync("users:");
+            await _redisService.ClearCacheByPrefixAsync("user:");
             return Ok(response);
         });
 

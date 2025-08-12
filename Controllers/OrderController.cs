@@ -24,6 +24,8 @@ namespace Api.Controllers
             return ExecuteAsync(async () =>
             {
                 var order = await _service.CreateAsync(dto);
+                await _redis.ClearCacheByPrefixAsync("orders_");
+                await _redis.ClearCacheByPrefixAsync("order_");
                 return CreatedAtAction(nameof(GetById), new { id = order.Id }, new { status = "ok", data = order });
             });
         }
