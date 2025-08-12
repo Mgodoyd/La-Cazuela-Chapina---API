@@ -253,6 +253,9 @@ ENTRYPOINT ["dotnet", "Api.dll"]
 - **Documentación**: Completa de todos los endpoints
 - **Testing**: Interfaz para probar la API
 
+### Postman
+- **Colección**: https://documenter.getpostman.com/view/18340700/2sB3BGFokV
+
 ### Postman Collection
 - **Colección**: Endpoints organizados por funcionalidad
 - **Variables**: Configuración para diferentes entornos
