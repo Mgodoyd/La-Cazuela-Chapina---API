@@ -26,8 +26,8 @@ namespace Api.Data
         public DbSet<Proveedor> Supplier { get; set; }
         public DbSet<KnowledgeChunk> Knowledge { get; set; }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
+       protected override void OnModelCreating(ModelBuilder modelBuilder)
+       {
             base.OnModelCreating(modelBuilder);
 
             // Evitando borrado en cascada peligroso
@@ -67,9 +67,24 @@ namespace Api.Data
             modelBuilder.Entity<ProductoBase>()
                 .HasIndex(p => p.Name);
 
-            // Precision para precios
+            // ProductoBase
             modelBuilder.Entity<ProductoBase>()
                 .Property(p => p.Price)
+                .HasPrecision(10, 2);
+
+            // Combo
+            modelBuilder.Entity<Combo>()
+                .Property(c => c.Price)
+                .HasPrecision(10, 2);
+
+            // InventarioItem
+            modelBuilder.Entity<InventarioItem>()
+                .Property(i => i.CurrentQuantity)
+                .HasPrecision(10, 2);
+
+            // MateriaPrima
+            modelBuilder.Entity<MateriaPrima>()
+                .Property(m => m.MinStock)
                 .HasPrecision(10, 2);
 
             modelBuilder.Entity<DetalleVenta>()
@@ -88,7 +103,6 @@ namespace Api.Data
                 .HasForeignKey(d => d.SaleId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-
             modelBuilder.Entity<DetallePedido>()
                 .Property(d => d.UnitPrice)
                 .HasPrecision(10, 2);
@@ -105,7 +119,6 @@ namespace Api.Data
                 .Property(k => k.Embedding)
                 .HasColumnType("NVARCHAR(MAX)");
         }
-
     }
 }
 

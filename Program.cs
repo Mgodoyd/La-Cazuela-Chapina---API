@@ -40,7 +40,9 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
     {
         EndPoints = { $"{redisHost}:{redisPort}" },
         AbortOnConnectFail=false,
-        Ssl = true
+        Ssl = false,
+        ConnectTimeout = 15000,
+        SyncTimeout = 15000
     };
     return ConnectionMultiplexer.Connect(config);
 });
