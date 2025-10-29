@@ -1,7 +1,6 @@
 version: '3.9'
 
 services:
-  # 🗄️ SQL Server
   mssql:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: mssql
@@ -16,7 +15,6 @@ services:
     networks:
       - internal_net
 
-  # ⚡ Redis
   redis:
     image: redis:7.2
     container_name: redis
