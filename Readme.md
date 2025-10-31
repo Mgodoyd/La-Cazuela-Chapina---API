@@ -254,10 +254,7 @@ ENTRYPOINT ["dotnet", "Api.dll"]
 - **Testing**: Interfaz para probar la API
 
 ### Postman Collection
-- **Colección**: Endpoints organizados por funcionalidad
-- **Variables**: Configuración para diferentes entornos
-- **Tests**: Validaciones automáticas de respuestas
-- 
----
+- **Colección**: https://documenter.getpostman.com/view/18340700/2sB3BGFokV
+
 
 *Este README documenta la versión 1.0 del backend de La Cazuela Chapina.*
