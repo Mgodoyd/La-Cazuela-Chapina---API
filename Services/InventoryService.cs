@@ -42,6 +42,16 @@ namespace Api.Services
             await _rawMaterialRepo.AddAsync(rawMaterial);
             await _rawMaterialRepo.SaveChangesAsync();
 
+            // Crear automáticamente el InventarioItem asociado con cantidad inicial 0
+            var inventoryItem = new InventarioItem
+            {
+                Id = Guid.NewGuid(),
+                RawMaterialId = rawMaterial.Id,
+                CurrentQuantity = 0
+            };
+            await _inventoryItemRepo.AddAsync(inventoryItem);
+            await _inventoryItemRepo.SaveChangesAsync();
+
             return rawMaterial;
         }
 
